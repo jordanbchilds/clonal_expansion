@@ -1,7 +1,10 @@
 plotfuns = list()
-Nsims = 100
-T.life = 80*52*7*24*3600
+Nsims = 1
+# T.life = 80*52*7*24*3600
 dt.week = 7*24*3600
+
+T.life = 52*7*24*3600
+
 
 myDarkGrey = rgb(169,169,169, alpha=50, max=255)
 
@@ -58,29 +61,29 @@ gillespied = function(N, T=T.life, dt=dt.week, ...){
 ###############################################
 ######## Singular GILLESPIES
 ###############################################
-# 
-# plotGillespie = function(sim, T=T.life, dt=dt.week) {
-#   t = seq(from=1, to=T/dt, by=1)
-#   M = sim[,2]
-#   W = sim[,1]
-#   Mload = M/(M+W)
-#   plot(t, Mload, ylab="Mutation Load", type='s', col="darkgrey", ylim=c(0,1), 
-#        main=paste0("Simulation ", sprintf("%04d",i)))
-#   plot(t, M+W, ylab="C", type='s', col="darkgrey",
-#        main=paste0("Simulation ", sprintf("%04d",i)))
-# }
-# 
-# for(i in 1:Nsims){
-#   # Without actually executing the plotwalk function, store its output inside another function in e.g. a list
-#   plotfuns[[i]] = gillespied(N)[["plotter"]]
-# }
-# 
-# # Four plots per page
-# pdf("GillespieSim.pdf")
-# op = par(mfrow=c(2,2), mai=c(0.75,0.75,0.5,0.5))
-# for(i in 1:Nsims) walk = plotfuns[[i]]()
-# par(op)
-# dev.off()
+
+plotGillespie = function(sim, T=T.life, dt=dt.week) {
+  t = seq(from=1, to=T/dt, by=1)
+  M = sim[,2]
+  W = sim[,1]
+  Mload = M/(M+W)
+  plot(t, Mload, ylab="Mutation Load", type='s', col="darkgrey", ylim=c(0,1),
+       main=paste0("Simulation ", sprintf("%04d",i)))
+  plot(t, M+W, ylab="C", type='s', col="darkgrey",
+       main=paste0("Simulation ", sprintf("%04d",i)))
+}
+
+for(i in 1:Nsims){
+  # Without actually executing the plotwalk function, store its output inside another function in e.g. a list
+  plotfuns[[i]] = gillespied(N)[["plotter"]]
+}
+
+# Four plots per page
+pdf("GillespieSim.pdf")
+op = par(mfrow=c(2,2), mai=c(0.75,0.75,0.5,0.5))
+for(i in 1:Nsims) walk = plotfuns[[i]]()
+par(op)
+dev.off()
 
 
 ###############################################
@@ -88,14 +91,14 @@ gillespied = function(N, T=T.life, dt=dt.week, ...){
 ###############################################
 
 
-simGillespies = function(Nsims, T=T, dt=dt){
+simGillespies = function(Nsims, T=T.life, dt=dt.week){
   n = T%/%dt
   sim_array = array(NA, dim=c(n,2,Nsims))
   for(i in 1:Nsims) sim_array[,,i] = gillespied(N)[["sim"]]
   return( list("plotter" = function() plotGillespies(sim_array), "sim"=sim_array ) ) 
 }
 
-plotGillespies = function(sim_array, T=T, dt=dt){
+plotGillespies = function(sim_array, T=T.life, dt=dt.week){
   t = seq(from=dt, to=T, by=dt)
   Nsims = dim(sim_array)[3]
   x.lim = range(sim_array[,1,])

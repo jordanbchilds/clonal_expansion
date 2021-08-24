@@ -1,14 +1,23 @@
 args = commandArgs(trailingOnly = TRUE)
 if( length(args)==0 ){
-  filePath = file.path("Gillespie_sim.pdf")
+  filePath = file.path("Gillespie_sim.txt")
+  conFile = file.path("Gillespie_sim.Rout")
 } else {
-  filePath = file.path(paste0("Gillespie_sim",sprintf("%04s", args), ".txt") ) 
+  filePath = file.path(paste0("Gillespie_sim",sprintf("%04s", args), ".txt") )
+  conFile = file.path(paste0("Gilespie_sim", sprintf("%04s", args), ".Rout") )
 }
 
-dir.create("Simulations", showWarnings=FALSE)
+dir.create("Simulations", showWarnings = FALSE)
 dir.create("Simulations/Output", showWarnings = FALSE)
+dir.create("Simulations/Console", showWarnings = FALSE)
 
-T.life = 80*52*7*24*3600
+conPath = file.path("Simulations/Console", conFile)
+conOutput <- file(conPath, open = "wt")
+sink(conOutput)
+sink(conOutput, type = "message")
+
+
+T.life = 52*7*24*3600
 dt.week = 7*24*3600
 
 myDarkGrey = rgb(169,169,169, alpha=50, max=255)
@@ -24,16 +33,17 @@ inits = function(n=1){
 N = list(Pre=matrix(c(1,0,0,1,1,0,0,1,1,0), byrow=TRUE, ncol=2, nrow=5),
          Post=matrix(c(2,0,0,2,0,0,0,0,1,1), byrow=TRUE, ncol=2, nrow=5) )
 
-N$h = function(x, tt, th=c(r_w=8e-6, r_m=8e-6*1.05, d_w=8e-6, d_m=8e-6, m=0)){
+N$h = function(x, tt, th=c(r_w=8e-6, r_m=8e-6*1.01, d_w=8e-6, d_m=8e-6, m=0)){
   with(as.list(c(x,th)),{
     return(c(r_w*x[1], r_m*x[2], d_w*x[1], d_m*x[2], m*x[1]))
   })
 }
 
+N$M = inits()
+
 # Visualising a 1D random walk, for example
 gillespied = function(N, T=T.life, dt=dt.week, ...){
   # Some like real heavy computing man
-  N$M = inits(n=1)
   tt = 0
   n = T%/%dt
   x = N$M
@@ -70,9 +80,9 @@ gillespied = function(N, T=T.life, dt=dt.week, ...){
 Gillespie = gillespied(N)
 
 write.table(Gillespie, file=file.path("Simulations/Output", filePath) )
-  
-  
-  
+
+sink(type = "message")
+sink()
   
   
   

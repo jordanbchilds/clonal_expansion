@@ -5,7 +5,7 @@ if( length(args)==0 ){
   filePath = file.path(paste0("Gillespie_sim",sprintf("%04s", args), ".txt") ) 
 }
 
-dir.create("Simulations", chowWarnings=FALSE)
+dir.create("Simulations", showWarnings=FALSE)
 dir.create("Simulations/Output", showWarnings = FALSE)
 
 T.life = 80*52*7*24*3600

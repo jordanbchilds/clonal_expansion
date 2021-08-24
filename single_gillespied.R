@@ -5,7 +5,8 @@ if( length(args)==0 ){
   filePath = file.path(paste0("Gillespie_sim",sprintf("%04s", args), ".txt") ) 
 }
 
-dir.create("Simulations", showWarnings = FALSE)
+dir.create("Simulations", chowWarnings=FALSE)
+dir.create("Simulations/Output", showWarnings = FALSE)
 
 T.life = 80*52*7*24*3600
 dt.week = 7*24*3600
@@ -68,13 +69,7 @@ gillespied = function(N, T=T.life, dt=dt.week, ...){
 
 Gillespie = gillespied(N)
 
-plot(Gillespie[,2])
-plot(Gillespie[,1])
-
-C = Gillespie[,1] + Gillespie[,2]
-h = Gillespie[,2]/C
-
-write.table(Gillespie, file=filePath)
+write.table(Gillespie, file=file.path("Simulations/Output", filePath) )
   
   
   

@@ -8,8 +8,12 @@ if( length(args)!=0 ){
   N = NULL
 }
 
+dir.create("Simulations", showWarnings = FALSE)
+dir.create("Simulations/PDF", showWarnings = FALSE)
+
+N=100
 if( length(N)>0 ){
-  sims = sprintf( "Gillespie_sim", sprintf("%04d",1:N),".pdf")
+  sims = paste0( "Gillespie_sim",str_pad(as.character(1:N), width=4 ),".txt")
   
   # list to store output as functions
   h_list = list()
@@ -18,40 +22,56 @@ if( length(N)>0 ){
   
   # function to plot h (mutation load)
   h_line = function(h){
-    t = seq(0,80, by=1/52)
-    return( function(h) lines(t, h, col="myDarkGrey"))
+    hh = ts(h, start=1/52, frequency=52)
+    return( list("plotter"=function() lines(hh, col=myDarkGrey), "ts"=hh ) )
   }
   
   # function to plot C (copy number)
   C_line = function(C){
-    t = seq(0,80, by=1/52)
-    return( function(C) lines(t, C, col="myDarkGrey"))
+    CC = ts(C, star=1/52, frequency=52)
+    return( list("plotter"=function() lines(CC, col=myDarkGrey), "ts"=CC ) )
   }
   
   # loop through datasets and store h_line and C_line functions
   for(i in 1:N){
-    df = read.delim(paste0("Simulations/",sims[i]), header=FALSE, stringsAsFactors=FALSE)
-    C = df[,1] + df[,2]
-    h = df[,2]/C
-    C_list[[i]] = C_line(C)
-    Cmax[i] = max(C)
-    h_list[[i]] = h_line(h)
+    if( file.exists(paste0("Simulations/",sims[i]))){ # TEMPORARY SOLUTION  
+      df = read.delim(paste0("Simulations/",sims[i]),sep=" ", header=TRUE, 
+                      stringsAsFactors=FALSE)
+      C = df[,1] + df[,2]
+      h = df[,2]/C
+      C_list[[i]] = C_line(C)
+      Cmax[i] = max(C)
+      h_list[[i]] = h_line(h)
+    } else { 
+      C_list[[i]] = C_line(NA)
+      h_list[[i]] = h_line(NA)
+    }
   }
   
-  plot(NA, ylim=c(0,1), xlim=c(0,80), main="Mutation Load",
+  pdf("Simulations/PDF/eqParams.pdf", width=14, height=8.5)
+  op = par(mfrow=c(1,2))
+  plot(NA, ylim=c(0,1), xlim=c(0,10), main="Mutation Load",
        xlab="Time (years)", ylab="h")
   for(i in 1:N){
-    C_list[[i]]()
+    lines(h_list[[i]]$ts, col=myDarkGrey)
   }
   
-  plot(NA, ylim=c(0,max(Cmax)), xlim=c(0,80), main="Copy Number", 
+  na.Cmax = na.omit(Cmax)
+  ymax = sort(na.Cmax)[length(na.Cmax)-1]
+  plot(NA, ylim=c(0,ymax), xlim=c(0,10), main="Copy Number", 
        xlab="Time (years)", ylab="C")
   for(i in 1:N){
-    h_list[[i]]()
+    lines(C_list[[i]]$ts, col=myDarkGrey)
   }
+  abline(h=200+1.96*50, lty=2, col="blue", lwd=2)
+  abline(h=200-1.96*50, lty=2, col="blue", lwd=2)
+  par(op)
+  dev.off()
+  
 } else {
   error("Number of simulations required.")
 }
+
 
 
 

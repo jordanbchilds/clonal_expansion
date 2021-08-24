@@ -17,7 +17,7 @@ sink(conOutput)
 sink(conOutput, type = "message")
 
 
-T.life = 52*7*24*3600
+T.life = 80*52*7*24*3600
 dt.week = 7*24*3600
 
 myDarkGrey = rgb(169,169,169, alpha=50, max=255)

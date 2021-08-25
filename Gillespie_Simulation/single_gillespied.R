@@ -8,16 +8,16 @@ if( length(args)==0 ){
 }
 
 dir.create("Simulations", showWarnings = FALSE)
-dir.create("Simulations/Output", showWarnings = FALSE)
-dir.create("Simulations/Console", showWarnings = FALSE)
+dir.create("Simulations/OUTPUT_optim", showWarnings = FALSE)
+dir.create("Simulations/CONSOLE_optim", showWarnings = FALSE)
 
-conPath = file.path("Simulations/Console", conFile)
+conPath = file.path("Simulations/CONSOLE_optim", conFile)
 conOutput <- file(conPath, open = "wt")
 sink(conOutput)
 sink(conOutput, type = "message")
 
 
-T.life = 10*52*7*24*3600
+T.life = 80*52*7*24*3600
 dt.week = 7*24*3600
 
 myDarkGrey = rgb(169,169,169, alpha=50, max=255)
@@ -33,7 +33,7 @@ inits = function(n=1){
 N = list(Pre=matrix(c(1,0,0,1,1,0,0,1,1,0), byrow=TRUE, ncol=2, nrow=5),
          Post=matrix(c(2,0,0,2,0,0,0,0,1,1), byrow=TRUE, ncol=2, nrow=5) )
 
-N$h = function(x, tt, th=c(r_w=8e-6, r_m=8e-6*1.01, d_w=8e-6, d_m=8e-6, m=0)){
+N$h = function(x, tt, th=c(r_w=3.06e-8, r_m=3.06e-8, d_w=3.06e-8, d_m=3.06e-8, m=0)){
   with(as.list(c(x,th)),{
     return(c(r_w*x[1], r_m*x[2], d_w*x[1], d_m*x[2], m*x[1]))
   })
@@ -79,7 +79,7 @@ gillespied = function(N, T=T.life, dt=dt.week, ...){
 
 Gillespie = gillespied(N)
 
-write.table(Gillespie, file=file.path("Simulations/Output", filePath) )
+write.table(Gillespie, file=file.path("Simulations/OUTPUT_optim", filePath) )
 
 sink(type = "message")
 sink()

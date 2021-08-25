@@ -33,7 +33,7 @@ inits = function(n=1){
 N = list(Pre=matrix(c(1,0,0,1,1,0,0,1,1,0), byrow=TRUE, ncol=2, nrow=5),
          Post=matrix(c(2,0,0,2,0,0,0,0,1,1), byrow=TRUE, ncol=2, nrow=5) )
 
-N$h = function(x, tt, th=c(r_w=3.06e-8, r_m=3.06e-8, d_w=3.06e-8, d_m=3.06e-8, m=0)){
+N$h = function(x, tt, th=c(r_w=3.06e-8, r_m=3.06e-8*1.02, d_w=3.06e-8, d_m=3.06e-8, m=0)){
   with(as.list(c(x,th)),{
     return(c(r_w*x[1], r_m*x[2], d_w*x[1], d_m*x[2], m*x[1]))
   })

@@ -18,7 +18,7 @@ dir.create("Simulations", showWarnings = FALSE)
 dir.create("Simulations/PDF", showWarnings = FALSE)
 dir.create("Simulations/console", showWarnings = FALSE)
 
-conPath = file.path("Simulations/console/sim_gill")
+conPath = file.path("Simulations/console/sim_gill.txt")
 conOutput <- file(conPath, open = "wt")
 sink(conOutput)
 sink(conOutput, type = "message")
@@ -90,7 +90,7 @@ for(i in 1:N.sim){
 
 Gillespie_Sims = mclapply(NN, gillespied, T.sim, dt.sim)
 
-pdf("Simulations/PDF/simPDf", width=14, height=8.5)
+pdf("Simulations/PDF/simPDf.pdf", width=14, height=8.5)
 op = par(mfrow=c(1,2))
 plot(1, type='n', ylim=c(0,1), xlim=c(0,80), main="",
      xlab="Time (years)", ylab="Mutation Load", cex.lab=1.4)

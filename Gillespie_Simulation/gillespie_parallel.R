@@ -18,7 +18,7 @@ dir.create("Simulations", showWarnings = FALSE)
 dir.create("Simulations/PDF", showWarnings = FALSE)
 dir.create("Simulations/console", showWarnings = FALSE)
 
-conPath = file.path("Simulations/CONSOLE_optim", conFile)
+conPath = file.path("Simulations/console/sim_gill")
 conOutput <- file(conPath, open = "wt")
 sink(conOutput)
 sink(conOutput, type = "message")

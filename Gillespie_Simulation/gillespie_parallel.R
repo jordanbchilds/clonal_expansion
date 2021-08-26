@@ -16,6 +16,12 @@ myBlack = rgb(0,0,0, alpha=25, max=255)
 # full simulation results not saved
 dir.create("Simulations", showWarnings = FALSE)
 dir.create("Simulations/PDF", showWarnings = FALSE)
+dir.create("Simulations/console", showWarnings = FALSE)
+
+conPath = file.path("Simulations/CONSOLE_optim", conFile)
+conOutput <- file(conPath, open = "wt")
+sink(conOutput)
+sink(conOutput, type = "message")
 
 # define simulation length and hwo often populations monitored 
 T.sim = 80*52*7*24*3600
@@ -101,6 +107,8 @@ for(i in 1:N.sim){
 par(op)
 dev.off()
   
+sink(type = "message")
+sink()
 
 
 

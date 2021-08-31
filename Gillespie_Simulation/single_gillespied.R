@@ -20,7 +20,7 @@ sink(conOutput, type = "message")
 T.life = 80*52*7*24*3600
 dt.week = 7*24*3600
 
-myDarkGrey = rgb(169,169,169, alpha=50, max=255)
+myBlack = rgb(0,0,0, alpha=50, max=255)
 
 # random draws for intial values, distributions taken from Joe's diss
 inits = function(n=1){

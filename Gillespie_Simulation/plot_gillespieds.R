@@ -1,5 +1,5 @@
 
-myDarkGrey = rgb(169,169,169, alpha=50, max=255)
+myDarkGrey = rgb(169,169,169, alpha=20, max=255)
 
 args = commandArgs(trailingOnly = TRUE)
 if( length(args)!=0 ){
@@ -11,7 +11,7 @@ if( length(args)!=0 ){
 dir.create("Simulations", showWarnings = FALSE)
 dir.create("Simulations/PDF", showWarnings = FALSE)
 
-N=100
+N=500
 if( length(N)>0 ){
   sims = paste0( "Gillespie_sim",str_pad(as.character(1:N), width=4 ),".txt")
   
@@ -34,9 +34,9 @@ if( length(N)>0 ){
   
   # loop through datasets and store h_line and C_line functions
   for(i in 1:N){
-    if( file.exists(paste0("Simulations/",sims[i]))){ # TEMPORARY SOLUTION  
-      df = read.delim(paste0("Simulations/",sims[i]),sep=" ", header=TRUE, 
-                      stringsAsFactors=FALSE)
+    if( file.exists(paste0("Simulations/OUTPUT_optim/",sims[i]))){ # TEMPORARY SOLUTION  
+      df = read.delim(paste0("Simulations/OUTPUT_optim/",sims[i]),
+                      sep=" ", header=TRUE, stringsAsFactors=FALSE)
       C = df[,1] + df[,2]
       h = df[,2]/C
       C_list[[i]] = C_line(C)
@@ -48,9 +48,9 @@ if( length(N)>0 ){
     }
   }
   
-  pdf("Simulations/PDF/eqParams.pdf", width=14, height=8.5)
+  pdf("Simulations/PDF/simPDF.pdf", width=14, height=8.5)
   op = par(mfrow=c(1,2))
-  plot(NA, ylim=c(0,1), xlim=c(0,10), main="Mutation Load",
+  plot(NA, ylim=c(0,1), xlim=c(0,80), main="Mutation Load",
        xlab="Time (years)", ylab="h")
   for(i in 1:N){
     lines(h_list[[i]]$ts, col=myDarkGrey)
@@ -58,13 +58,11 @@ if( length(N)>0 ){
   
   na.Cmax = na.omit(Cmax)
   ymax = sort(na.Cmax)[length(na.Cmax)-1]
-  plot(NA, ylim=c(0,ymax), xlim=c(0,10), main="Copy Number", 
+  plot(NA, ylim=c(0,ymax), xlim=c(0,80), main="Copy Number", 
        xlab="Time (years)", ylab="C")
   for(i in 1:N){
     lines(C_list[[i]]$ts, col=myDarkGrey)
   }
-  abline(h=200+1.96*50, lty=2, col="blue", lwd=2)
-  abline(h=200-1.96*50, lty=2, col="blue", lwd=2)
   par(op)
   dev.off()
   

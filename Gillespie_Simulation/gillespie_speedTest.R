@@ -1,6 +1,7 @@
 library("parallel")
+library("Rcpp")
 
-# if anything other than one argument is passed the number 
+# if zero or more than one argument is passed the number 
 # of simulations is default N=1000
 arg = commandArgs(trailingOnly = TRUE)
 if( length(args)!=1 ){
@@ -8,10 +9,6 @@ if( length(args)!=1 ){
 } else {
   N.sim = 500
 }
-
-
-numCore = detectCores()-1
-cl  = makeCluster(numCore) 
 
 # Conor doesn't like grey
 myBlack = rgb(0,0,0, alpha=15, max=255)
@@ -27,7 +24,7 @@ T.sim = 80*52*7*24*3600
 dt.sim = 7*24*3600
 
 # function to simulate using Gillespie Algo, from SMSB by D. Wilkinson
-gillespied = function(N, T.sim, dt.sim, thresh=0.8, ...){
+gillespied_mtDNA = function(N, T.sim, dt.sim, thresh=0.8, ...){
   tt = 0
   n = T.sim%/%dt.sim
   x = N$M
@@ -40,7 +37,7 @@ gillespied = function(N, T.sim, dt.sim, thresh=0.8, ...){
   C0 = sum(x)
   repeat{
     error = C0 - sum(x)
-    h = N$h(x)
+    h = N$h(x, error)
     h0 = sum(h)
     if( h0 < 1e-10 ) tt = 1e99
     else tt = tt + rexp(1, h0)
@@ -59,26 +56,13 @@ gillespied = function(N, T.sim, dt.sim, thresh=0.8, ...){
         )
       }
     }
-    j = sample(v,1,prob=h)
+    j = sample(v,1,prob=h/h0)
     x = x + S[,j]
   }
 }
 
 
-# N$h = function(x, error, K_c=8.99e-9,
-#                th=c(r_w=3.06e-8*0.975, r_m=3.06e-8*1.025, d_w=3.06e-8, d_m=3.06e-8, m=0)){
-#   repo = c("r_w", "r_m")
-#   th.1 = th + error*K_c*(names(th)%in%repo)
-#   if(error>=0){
-#     return(c(r_w*x[1], r_m*x[2], d_w*x[1], d_m*x[2], m*x[1]))
-#   } else {
-#     if(th.1["r_w"]<0) th.1["r_w"] = th["r_w"]
-#     if(th.1["r_m"]<0) th.1["r_m"] = th["r_m"]
-#     return(c(r_w*x[1], r_m*x[2], d_w*x[1], d_m*x[2], m*x[1]))
-#   }
-# }
-
-# generate initial copy number and mutation load
+# generate intial copy number and mutation load
 inits = function(n=1){
   C = rnorm(n,200,50) 
   h = rbeta(n,10,18.57)
@@ -87,15 +71,28 @@ inits = function(n=1){
 }
 
 # define simulation parameters
-N = list(Pre=matrix(c(1,0,0,1,1,0,0,1,1,0), byrow=TRUE, ncol=2, nrow=5),
-         Post=matrix(c(2,0,0,2,0,0,0,0,1,1), byrow=TRUE, ncol=2, nrow=5) )
+# N = list(Pre=matrix(c(1,0,0,1,1,0,0,1,1,0), byrow=TRUE, ncol=2, nrow=5),
+#          Post=matrix(c(2,0,0,2,0,0,0,0,1,1), byrow=TRUE, ncol=2, nrow=5) )
+# 
+# N$h = function(x, th=c(r_w=3.06e-8*0.975, r_m=3.06e-8*1.025,
+#                        d_w=3.06e-8, d_m=3.06e-8, m=0)){
+#   th*rep(x,length.out=5)
+# }
 
-N$h = function(x, th=c(3.06e-8*0.975, 3.06e-8*1.025,
-                       3.06e-8, 3.06e-8, 0)){
-  with(as.list(c(x,th)), {
-    return(c(th[1]*x[1], th[2]*x[2], th[3]*x[1], th[4]*x[2], th[5]*x[1]))
-  })
-  
+N$h = function(x, error, K_c=8.99e-9,
+               th=c(r_w=3.06e-8*0.975, r_m=3.06e-8*1.025, d_w=3.06e-8, d_m=3.06e-8, m=0)){
+  r = c("r_w","r_m")
+  # th[r] = th[r] + error*K_c
+  if(error>=0){
+    with(as.list(c(x, th)),{
+      return( th*rep(x,length.out=5) )
+    })
+  } else {
+    # th[r] = 3.06e-8*(th[r]<0)
+    with(as.list(c(x, th)), {
+      return( th*rep(x,length.out=5) )
+    })
+  }
 }
 
 # create a list of length N (no. of sims) with the same input
@@ -112,14 +109,8 @@ gen_N = function(N, N.sim){
 
 NN = gen_N(N, N.sim)
 
-clusterExport(cl, c("gillespied", "NN"))
-
-tt = lapply(NN, gillespied, T.sim, dt.sim)
-
 # run the gillespie algo N.sim times using parallel::mclapply
-Gillespie_Sims = parLapply(cl, NN, gillespied, T.sim, dt.sim)
-
-stopCluster(cl)
+Gillespie_Sims = mclapply(NN, gillespied_mtDNA, T.sim, dt.sim)
 
 hprop_calc = function(Gillespie_output){
   sim_length = length(Gillespie_output[[1]][["above_thresh"]])
@@ -131,39 +122,19 @@ hprop_calc = function(Gillespie_output){
   return(hprop)
 }
 
+cppFunction('int sampleC(NumericVector hnorm, double u) {
+  int v = hnorm.size(); 
+  for( int i=0; i < v; i++ ){
+    if( hnorm[i] > u ){
+      return i+1;
+    }
+  }
+}')
 
-# save output as pdf 
-pdf("Simulations/PDF/simPDF.pdf", width=14, height=8.5)
-op = par(mfrow=c(1,2))
-plot(1, type='n', ylim=c(0,1), xlim=c(0,80), main="",
-     xlab="Time (years)", ylab="Mutation Load", cex.lab=1.4)
-for(i in 1:N.sim){
-  Gillespie_Sims[[i]][["h"]]()
-}
-ymax = double(N.sim)
-for(i in 1:N.sim) ymax[i] = Gillespie_Sims[[i]][["Cmax"]]
-plot(1, type='n', ylim=c(0,max(ymax)),  xlim=c(0,80), main="", 
-     xlab="Time (years)", ylab="Copy Number", cex.lab=1.4)
-for(i in 1:N.sim){
-  Gillespie_Sims[[i]][["C"]]()
-}
-h_prop = hprop_calc(Gillespie_Sims)
-plot(h_prop, ylim=c(0,1), xlim=c(0,80), main="Mutation Load Above 80%",
-     ylab="Proportion", cex.lab=1.4, cex.main=1.4)
-par(op)
-dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+t = runif(5)
+t = cumsum(t)/sum(t)
+t
+tt = double(1000)
+system.time( for(i in 1:10000) tt[i] = sampleC(hnorm=t, u=runif(1)) )
+system.time( for(i in 1:10000) sample(1:5,1,prob=t))
 

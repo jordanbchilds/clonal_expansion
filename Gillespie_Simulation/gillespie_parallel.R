@@ -11,9 +11,7 @@ if( length(args)!=1 ){
   N.sim = 500
 }
 
-
-numCore = detectCores()-1
-cl  = makeCluster(numCore) 
+cl  = makeCluster(16) 
 
 # Conor doesn't like grey
 myBlack = rgb(0,0,0, alpha=15, max=255)
@@ -22,7 +20,6 @@ myBlack = rgb(0,0,0, alpha=15, max=255)
 # full simulation results not saved
 dir.create("Simulations", showWarnings = FALSE)
 dir.create("Simulations/PDF", showWarnings = FALSE)
-dir.create("Simulations/console", showWarnings = FALSE)
 
 # define simulation length and hwo often populations monitored 
 T.sim = 80*52*7*24*3600
@@ -42,7 +39,7 @@ gillespied = function(N, T.sim, dt.sim, thresh=0.8, ...){
   C0 = sum(x)
   repeat{
     error = C0 - sum(x)
-    h = N$h(x)
+    h = N$h(x, error)
     h0 = sum(h)
     if( h0 < 1e-10 ) tt = 1e99
     else tt = tt + rexp(1, h0)
@@ -66,20 +63,6 @@ gillespied = function(N, T.sim, dt.sim, thresh=0.8, ...){
   }
 }
 
-
-# N$h = function(x, error, K_c=8.99e-9,
-#                th=c(r_w=3.06e-8*0.975, r_m=3.06e-8*1.025, d_w=3.06e-8, d_m=3.06e-8, m=0)){
-#   repo = c("r_w", "r_m")
-#   th.1 = th + error*K_c*(names(th)%in%repo)
-#   if(error>=0){
-#     return(c(r_w*x[1], r_m*x[2], d_w*x[1], d_m*x[2], m*x[1]))
-#   } else {
-#     if(th.1["r_w"]<0) th.1["r_w"] = th["r_w"]
-#     if(th.1["r_m"]<0) th.1["r_m"] = th["r_m"]
-#     return(c(r_w*x[1], r_m*x[2], d_w*x[1], d_m*x[2], m*x[1]))
-#   }
-# }
-
 # generate initial copy number and mutation load
 inits = function(n=1){
   C = rnorm(n,200,50) 
@@ -92,13 +75,32 @@ inits = function(n=1){
 N = list(Pre=matrix(c(1,0,0,1,1,0,0,1,1,0), byrow=TRUE, ncol=2, nrow=5),
          Post=matrix(c(2,0,0,2,0,0,0,0,1,1), byrow=TRUE, ncol=2, nrow=5) )
 
-N$h = function(x, th=c(3.06e-8*0.975, 3.06e-8*1.025,
-                       3.06e-8, 3.06e-8, 0)){
-  with(as.list(c(x,th)), {
-    return(c(th[1]*x[1], th[2]*x[2], th[3]*x[1], th[4]*x[2], th[5]*x[1]))
-  })
-  
+# N$h = function(x, error=0, th=c(3.06e-8*0.975, 3.06e-8*1.025,
+#                        3.06e-8, 3.06e-8, 0)){
+#   with(as.list(c(x,th)), {
+#     return(c(th[1]*x[1], th[2]*x[2], th[3]*x[1], th[4]*x[2], th[5]*x[1]))
+#   })
+# }
+
+N$h = function(x, error, K_c=8.99e-9,
+               th=c(r_w=3.06e-8*0.975, r_m=3.06e-8*1.025, d_w=3.06e-8, d_m=3.06e-8, m=0)){
+  r = c("r_w","r_m")
+  th.1 = th
+  th.1[r] = th[r] + error*K_c
+  print(th.1)
+  if(error>=0){
+    with(as.list(c(x, th.1)),{
+      return( th.1*c(x,x,x[1]))
+    })
+  } else {
+    th.1[th.1[r]<0] =  th[th.1[r]<0]
+    with(as.list(c(x, th.1)), {
+      return( th.1*c(x,x,x[1]))
+    })
+  }
 }
+
+N$h(x=c(100,100), error=-5)
 
 # create a list of length N (no. of sims) with the same input
 # but still draws initial values from init function
@@ -115,8 +117,6 @@ gen_N = function(N, N.sim){
 NN = gen_N(N, N.sim)
 
 clusterExport(cl, c("gillespied", "NN"))
-
-tt = lapply(NN, gillespied, T.sim, dt.sim)
 
 # run the gillespie algo N.sim times using parallel::mclapply
 Gillespie_Sims = parLapply(cl, NN, gillespied, T.sim, dt.sim)

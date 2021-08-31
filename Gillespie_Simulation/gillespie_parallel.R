@@ -1,5 +1,7 @@
 library("parallel")
 
+closeAllConnections()
+
 # if anything other than one argument is passed the number 
 # of simulations is default N=1000
 arg = commandArgs(trailingOnly = TRUE)

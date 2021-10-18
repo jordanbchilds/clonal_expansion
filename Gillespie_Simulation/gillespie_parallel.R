@@ -1,6 +1,4 @@
-library("profvis")
 library("parallel")
-library("Rcpp")
 
 # if zero or more than one argument is passed the number 
 # of simulations is default N=1000
@@ -20,8 +18,8 @@ dir.create("Simulations", showWarnings = FALSE)
 dir.create("Simulations/PDF", showWarnings = FALSE)
 
 # define simulation length and hwo often populations monitored 
-T.sim = 80*52*7*24*3600
-dt.sim = 7*24*3600
+T.sim = 80*365*24*3600
+dt.sim = 24*3600
 
 # function to simulate using Gillespie Algo, from SMSB by D. Wilkinson
 gillespied_mtDNA = function(N, T.sim, dt.sim, thresh=0.8, ...){
@@ -69,10 +67,10 @@ inits = function(n=1){
 }
 
 # define simulation parameters
-# N$h = function(x, error=0, th=c(3.06e-8*0.975, 3.06e-8*1.025,
-#                        3.06e-8, 3.06e-8, 0)){
-#     return(th*rep(x,length.out=5)
-# }
+N$h = function(x, error=0, th=c(3.06e-8, 3.06e-8,
+                        3.06e-8, 3.06e-8, 0)){
+     return(th*rep(x,length.out=5))
+}
 
 # define simulation parameters
 N = list(Pre=matrix(c(1,0,0,1,1,0,0,1,1,0), byrow=TRUE, ncol=2, nrow=5),
@@ -86,7 +84,7 @@ N$h = function(x, error, K_c=8.99e-9,
     th.1[r] = th[r] + error*K_c
     return( th.1*c(x,x,x[1]) )
   } else {
-    th.1[r] = 2*th[r]/(1+exp(-error/5000))
+    th.1[r] = 2*th[r]/(1+exp(-error/500))
     return( th.1*c(x,x,x[1]) )
   }
 }
@@ -97,7 +95,7 @@ gen_N = function(N, N.sim){
   NN = list()
   for(i in 1:N.sim){
     N.temp = N
-    N.temp$M = inits()
+    N.temp$M = c(100, 100)
     NN[[i]] = N.temp
   }
   return(NN)

@@ -1,15 +1,13 @@
-
-# Conor doesn't like grey
 myBlack = rgb(0,0,0, alpha=15, max=255)
 
 # create directory to save pdf output
 # full simulation results not saved
 dir.create("Gillespie_Simulation", showWarnings=F)
-dir.create("Gillespie_Simulation/R", showWarnings=F)
 
-# define simulation length and hwo often populations monitored 
+# define simulation length and how often populations monitored 
 T.sim = 80*365*24*3600
 dt.sim = 24*3600
+N.sim = 1000 # nuo. of simulations
 
 # function to simulate using Gillespie Algo, from SMSB by D. Wilkinson
 gillespied_mtDNA = function(N, T.sim, dt.sim, ...){
@@ -25,7 +23,7 @@ gillespied_mtDNA = function(N, T.sim, dt.sim, ...){
   C0 = sum(x)
   repeat{
     error = C0 - sum(x)
-    h = N$h(x, error)
+    h = N$h(x)
     h0 = sum(h)
     if( h0 < 1e-10 ) tt = 1e99
     else tt = tt + rexp(1, h0)
@@ -43,21 +41,20 @@ gillespied_mtDNA = function(N, T.sim, dt.sim, ...){
 }
 
 # generate intial copy number and mutation load
-# inits = function(n=1){
-#   C = rnorm(n,200,50) 
-#   h = rbeta(n,10,18.57)
-#   inits = round( c( C*(1-h), C*h ) )
-#   return( inits )
-# }
+inits = function(n=1){
+  C = rnorm(n,200,50)
+  h = rbeta(n,10,18.57)
+  inits = round( c( C*(1-h), C*h ) )
+  return( inits )
+}
 
 # define simulation parameters
 N = list(Pre=matrix(c(1,0,0,1,1,0,0,1,1,0), byrow=TRUE, ncol=2, nrow=5),
          Post=matrix(c(2,0,0,2,0,0,0,0,1,1), byrow=TRUE, ncol=2, nrow=5) )
 
 # define simulation parameters
-N$h = function(x, error=0, th=c(3.06e-8, 3.06e-8,
-                                3.06e-8, 3.06e-8, 0)){
-  return(th*rep(x,length.out=5))
+N$h = function(x, th=c(3.06e-8, 3.06e-8, 3.06e-8, 3.06e-8, 0)){
+  th*rep(x,length.out=5)
 }
 
 # N$h = function(x, error, K_c=8.99e-9,
@@ -79,24 +76,31 @@ gen_N = function(N, N.sim){
   NN = list()
   for(i in 1:N.sim){
     N.temp = N
+    # const initial populations
     N.temp$M = c(100, 100)
+    # N.temp$M = inits()
     NN[[i]] = N.temp
   }
   return(NN)
 }
 
-NN = gen_N(N, N.sim)
 
+######
+###### SINGLE RUN 
+
+N$M = c(100,100) # add initial conditions for test
+test = gillespied_mtDNA(N, T.sim, dt.sim)
+
+######
+######
+
+NN = gen_N(N, N.sim)
 cl  = makeCluster(4) 
 clusterExport(cl, c("gillespied_mtDNA", "NN"))
-
 Gillespie_sims = parLapply(cl, NN, gillespied_mtDNA, T.sim, dt.sim)
-# system.time( parLapply(cl, NN, gillespied_mtDNA, T.sim, dt.sim) ) 
-# when N.sim: time elapsed = 60.168
-
 stopCluster(cl)
 
-####
+#### convert raw population data to copy number and mutation load
 raw_to_summ = function(sim){
   n = nrow(sim)
   copy_num = rowSums(sim)
@@ -105,7 +109,6 @@ raw_to_summ = function(sim){
 
   return(cbind(copy_num, mut_load))
 }
-
 
 CH_sim = lapply(Gillespie_sims, raw_to_summ)
 
@@ -130,14 +133,10 @@ quantiles = function(sims, p){
   
 quant_sim = quantiles(CH_sim, p=c(0.025,0.1,0.5,0.9,0.975))
 
-write.table(quant_sim$copy_num, file="Gillespie_Simulation/R/copy_number.txt",
+write.table(quant_sim$copy_num, file="Gillespie_Simulation/copy_number_quantiles_r.txt",
             row.names=F, col.names=F)
-write.table(quant_sim$mut_load, file="Gillespie_Simulation/R/mutation_load.txt",
+write.table(quant_sim$mut_load, file="Gillespie_Simulation/mutation_load_quantiles_r.txt",
             row.names=F, col.names=F)
-
-
-
-
 
 
 

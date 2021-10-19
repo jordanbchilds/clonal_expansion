@@ -88,8 +88,9 @@ gen_N = function(N, N.sim){
 ######
 ###### SINGLE RUN 
 
-N$M = c(100,100) # add initial conditions for test
-test = gillespied_mtDNA(N, T.sim, dt.sim)
+Ntest = N
+Ntest$M = c(100,100) # add initial conditions for test
+test = gillespied_mtDNA(Ntest, T.sim, dt.sim)
 
 ######
 ######

@@ -1,15 +1,6 @@
 library("parallel")
 
-# if zero or more than one argument is passed the number 
-# of simulations is default N=1000
-arg = commandArgs(trailingOnly = TRUE)
-if( length(args)!=1 ){
-  N.sim = arg
-} else {
-  N.sim = 500
-}
 
-# Conor doesn't like grey
 myBlack = rgb(0,0,0, alpha=15, max=255)
 
 # create directory to save pdf output

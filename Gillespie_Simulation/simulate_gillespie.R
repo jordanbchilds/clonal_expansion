@@ -1,13 +1,15 @@
+library("parallel")
+
 myBlack = rgb(0,0,0, alpha=15, max=255)
 
 # create directory to save pdf output
 # full simulation results not saved
-dir.create("Gillespie_Simulation", showWarnings=F)
+dir.create("Simulations", showWarnings=F)
 
 # define simulation length and how often populations monitored 
 T.sim = 80*365*24*3600
 dt.sim = 24*3600
-N.sim = 1000 # nuo. of simulations
+N.sim = 10000 # nuo. of simulations
 
 # function to simulate using Gillespie Algo, from SMSB by D. Wilkinson
 gillespied_mtDNA = function(N, T.sim, dt.sim, ...){
@@ -84,25 +86,17 @@ gen_N = function(N, N.sim){
   return(NN)
 }
 
-
-######
-###### SINGLE RUN 
-
-Ntest = N
-Ntest$M = c(100,100) # add initial conditions for test
-test = gillespied_mtDNA(Ntest, T.sim, dt.sim)
-
-######
-######
-
 NN = gen_N(N, N.sim)
-cl  = makeCluster(4) 
-clusterExport(cl, c("gillespied_mtDNA", "NN"))
-Gillespie_sims = parLapply(cl, NN, gillespied_mtDNA, T.sim, dt.sim)
-stopCluster(cl)
+gillr_time = system.time({
+  cl  = makeCluster(4) 
+  clusterExport(cl, c("gillespied_mtDNA", "NN"))
+  Gillespie_sims = parLapply(cl, NN, gillespied_mtDNA, T.sim, dt.sim)
+  stopCluster(cl)
+})
+### 1000 simulations: 79.516 seconds 
 
 #### convert raw population data to copy number and mutation load
-raw_to_summ = function(sim){
+raw_to_hC = function(sim){
   n = nrow(sim)
   copy_num = rowSums(sim)
   mut_load = sim[,2]/copy_num
@@ -111,7 +105,25 @@ raw_to_summ = function(sim){
   return(cbind(copy_num, mut_load))
 }
 
-CH_sim = lapply(Gillespie_sims, raw_to_summ)
+CH_sim = lapply(Gillespie_sims, raw_to_hC)
+
+slice_dist = function(sims, t, T.sim, dt.sim){
+  t_tot = seq(dt.sim,T.sim, by=dt.sim)
+  sim_t = list()
+  sim_t[[1]] = matrix(NA, nrow=length(sims), ncol=length(t))
+  sim_t[[2]] =  sim_t[[1]]
+  for(i in 1:length(sims)){
+    for(j in 1:length(t)){
+      sim_t[[1]][i,j] = sims[[i]][t_tot==t[j],1]
+      sim_t[[2]][i,j] = sims[[i]][t_tot==t[j],2]
+    }
+  }
+  return(sim_t)
+}
+
+dist_sims = slice_dist(CH_sim, 1:8*10*365*24*3600, T.sim, dt.sim)
+
+dist_plotter(dist_sims, titles=c("Copy Number", "Mutation Load"))
 
 quantiles = function(sims, p){
   Nsim = length(sims)
@@ -121,7 +133,7 @@ quantiles = function(sims, p){
   out$mut_load = matrix(NA, nrow=n,ncol=length(p))
   for(t in 1:n){
     copy_t = vector("numeric", Nsim)
-    mut_t = vector("numeric", Nsim)
+    mut_t  = vector("numeric", Nsim)
     for(i in 1:Nsim){
       copy_t[i] = sims[[i]][t,1]
       mut_t[i] = sims[[i]][t,2]
@@ -132,17 +144,16 @@ quantiles = function(sims, p){
   return( out )
 }
   
-quant_sim = quantiles(CH_sim, p=c(0.025,0.1,0.5,0.9,0.975))
+quant_sim = quantiles(CH_sim, p=c(0.025,0.25,0.5,0.75,0.975))
 
-write.table(quant_sim$copy_num, file="Gillespie_Simulation/copy_number_quantiles_r.txt",
+write.table(quant_sim$copy_num, file="Simulations/CN_qnt_gill_r.txt",
             row.names=F, col.names=F)
-write.table(quant_sim$mut_load, file="Gillespie_Simulation/mutation_load_quantiles_r.txt",
+write.table(quant_sim$mut_load, file="Simulations/ML_qnt_gill_r.txt",
             row.names=F, col.names=F)
-
-
-
-
-
+write.table(dist_sims[[1]], file="Simulations/CN_ts_gill_r.txt",
+            row.names=F, col.names=F)
+write.table(dist_sims[[2]], file="Simulations/ML_ts_gill_r.txt",
+            row.names=F, col.names=F)
 
 
 

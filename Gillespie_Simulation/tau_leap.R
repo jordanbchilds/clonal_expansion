@@ -99,18 +99,6 @@ quantiles = function(sims, p){
 }
 tauLeap_qntl = quantiles(tauLeap_sim, p=c(0.025,0.25,0.5,0.75,0.975))
 
-plot(1, type='n', xlim=c(0,80), ylim=c(0,700), xlab="", ylab="")
-for( sim in tauLeap_sim){
-  lines(ts(sim[,1], start=0, end=80, frequency=52), col=myBlack)
-}
-title(main="Copy Number")
-
-plot(1, type='n', xlim=c(0,80), ylim=c(0,1), xlab="", ylab="")
-for( sim in tauLeap_sim){
-  lines(ts(sim[,2], start=0, end=80, frequency=52), col=myBlack)
-}
-title(main="Mutation Load")
-
 ###
 ### save output
 write.table(tauLeap_qntl[[1]], "./Simulations/CN_qnt_tau_r.txt",row.names=F, col.names=F)
@@ -133,12 +121,6 @@ slice_dist = function(sims, t, Tmax, dt){
 }
 
 sims_dist = slice_dist(tauLeap_sim, 1:8*10*365*24*3600, Tmax, dt)
-
-plot(1, type="n", xlim=c(0,600), ylim=c(0,0.01), ylab="", xlab="")
-for(i in 1:8){
-  lines(density(sims_dist[[1]][,i]), col=i)
-}
-plot(density(sims_dist[[1]][,3]))
 
 ###
 ### save time slice distributions

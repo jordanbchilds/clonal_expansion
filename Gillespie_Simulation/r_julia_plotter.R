@@ -30,7 +30,6 @@ dir.create("Simulations", showWarnings = F)
 dir.create("Simulations/PDF", showWarnings = F)
 
 plotter = function(x, ylim, t, title, main){
-  
   plot(1, type="n", ylim=ylim, xlim=c(0,80), main=title, 
        xlab="Time (years)", ylab="")
   lines(ts(x[,3], start=0,end=80, frequency=52), lwd=2, col="black")

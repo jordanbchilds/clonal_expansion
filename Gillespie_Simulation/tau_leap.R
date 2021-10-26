@@ -57,7 +57,7 @@ NN = gen_N(N, N.sim)
 ###
 ### Nsim simulations
 tauLeap_time = system.time({
-  cl  = makeCluster(4)
+  cl  = makeCluster(12)
   clusterExport(cl, c("tauleap_simulation", "NN"))
   tauLeap_raw = parLapply(cl, NN, tauleap_simulation, Tmax, dt)
   stopCluster(cl)

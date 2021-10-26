@@ -47,22 +47,22 @@ N = list(Pre=matrix(c(1,0,0,1,1,0,0,1,1,0), byrow=TRUE, ncol=2, nrow=5),
          Post=matrix(c(2,0,0,2,0,0,0,0,1,1), byrow=TRUE, ncol=2, nrow=5) )
 
 # define simulation parameters
-# N$h = function(x, th=c(3.06e-8, 3.06e-8, 3.06e-8, 3.06e-8, 0)){
-#   th*rep(x,length.out=5)
-# }
-
-N$h = function(x, error, K_c=c(8.99e-9, 1/500),
-               th=c(r_w=3.06e-8*0.975, r_m=3.06e-8*1.025, d_w=3.06e-8, d_m=3.06e-8, m=3.06e-9)){
-  r = c("r_w","r_m")
-  th.1 = th
-  if(error>=0){
-    th.1[r] = th[r] + error*K_c[1]
-    return( th.1*c(x,x,x[1]) )
-  } else {
-    th.1[r] = 2*th[r]/(1+exp(-error*K_c[2]))
-    return( th.1*c(x,x,x[1]) )
-  }
+N$h = function(x, th=c(3.06e-8, 3.06e-8, 3.06e-8, 3.06e-8, 0)){
+  th*rep(x,length.out=5)
 }
+
+# N$h = function(x, error, K_c=c(8.99e-9, 1/500),
+#                th=c(r_w=3.06e-8*0.975, r_m=3.06e-8*1.025, d_w=3.06e-8, d_m=3.06e-8, m=3.06e-9)){
+#   r = c("r_w","r_m")
+#   th.1 = th
+#   if(error>=0){
+#     th.1[r] = th[r] + error*K_c[1]
+#     return( th.1*c(x,x,x[1]) )
+#   } else {
+#     th.1[r] = 2*th[r]/(1+exp(-error*K_c[2]))
+#     return( th.1*c(x,x,x[1]) )
+#   }
+# }
 
 # generate intial copy number and mutation load
 inits = function(n=1){
@@ -88,7 +88,7 @@ gen_N = function(N, N.sim){
 NN = gen_N(N, N.sim)
 
 gillr_time = system.time({
-  cl  = makeCluster(12) 
+  cl  = makeCluster(20) 
   clusterExport(cl, c("gillespied_mtDNA", "NN"))
   Gillespie_sims = parLapply(cl, NN, gillespied_mtDNA, T.sim, dt.sim)
   stopCluster(cl)

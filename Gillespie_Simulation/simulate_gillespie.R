@@ -25,7 +25,7 @@ gillespied_mtDNA = function(N, T.sim, dt.sim, ...){
   C0 = sum(x)
   repeat{
     error = C0 - sum(x)
-    h = N$h(x, error)
+    h = N$h(x)
     h0 = sum(h)
     if( h0 < 1e-10 ) tt = 1e99
     else tt = tt + rexp(1, h0)

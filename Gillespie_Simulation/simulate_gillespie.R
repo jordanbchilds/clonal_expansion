@@ -88,7 +88,7 @@ gen_N = function(N, N.sim){
 NN = gen_N(N, N.sim)
 
 gillr_time = system.time({
-  cl  = makeCluster(5) 
+  cl  = makeCluster(12) 
   clusterExport(cl, c("gillespied_mtDNA", "NN"))
   Gillespie_sims = parLapply(cl, NN, gillespied_mtDNA, T.sim, dt.sim)
   stopCluster(cl)

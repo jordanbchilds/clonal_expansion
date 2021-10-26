@@ -78,7 +78,7 @@ gen_N = function(N, N.sim){
   for(i in 1:N.sim){
     N.temp = N
     # const initial populations
-    N.temp$M = inits()
+    N.temp$M = c(100,100)
     # N.temp$M = inits()
     NN[[i]] = N.temp
   }

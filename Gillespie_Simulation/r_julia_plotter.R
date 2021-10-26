@@ -26,6 +26,9 @@ Tmax = 80*365*24*3600
 dt = 24*3600
 t = seq(0,Tmax, by=dt)
 
+dir.create("Simulations", showWarnings = F)
+dir.create("Simulations/PDF", showWarnings = F)
+
 plotter = function(x, ylim, t, title, main){
   
   plot(1, type="n", ylim=ylim, xlim=c(0,80), main=title, xlab="Time (years)")

@@ -198,11 +198,11 @@ ts = [0:Δtout:Tmax;]./(365*24*3600);
 p1 = plot(ts, simulations[:,1,:], color=myBlack, legend=false, title="Copy Number")
 p2 = plot(ts, simulations[:,2,:], color=myBlack, legend=false, title="Mutation Load")
 plot(p1, p2, layout=(1,2), legend=false)
-savefig("cheekypdf.pdf")
+savefig("cheekypdf.pdf") # You should save this as a raster file (e.g. lossless .png) as vector-graphics representation of all the stochastic traces takes a lot of memory
 
 p3 = plot(ts, sims_qntl[:,:,1], title="Copy Number Qunatiles")
 p4 = plot(ts, sims_qntl[:,:,2], title="Mutation Load Quantiles")
 plot(p3, p4, layout=(1,2), legend=false)
 
-writedlm("Simulations/CN_qnt_abm_jl.txt", sims_qntl[:,:,1])
+writedlm("Simulations/CN_qnt_abm_jl.txt", sims_qntl[:,:,1]) # Error message saying these files don't exist
 writedlm("Simulations/ML_qnt_abm_jl.txt", sims_qntl[:,:,2])

@@ -7,9 +7,9 @@ addprocs(4) ;
 
 @everywhere W0 = 100
 @everywhere M0 = 100
-@everywhere Tmax = 80*365*24*3600
-@everywhere Δtout = 7*24*3600 # time step to save output
-@everywhere Δt = 24*3600 # time step for the simulation
+@everywhere Tmax = 80*365*24*3600 # (s)
+@everywhere Δtout = 7*24*3600 # time step to save output (s)
+@everywhere Δt = 24*3600 # time step for the simulation (s)
 @everywhere Nsim = 500 ; # number of simulations
 
 @everywhere struct mtDNA 
@@ -19,18 +19,18 @@ addprocs(4) ;
     status::String
     
     function mtDNA(unique_id,parent_id,status)
-        if status ∉ ["wild", "mutant"]
+        if !(status in ["wild", "mutant"])
             error("Molecules must be of type 'wild' or 'mutant' ")
         end
         if status=="wild"
-            new([6.08e-8*Δt,6.08e-8*Δt,0.0], unique_id, parent_id, status)
+            new([6.08e-8*Δt,6.08e-8*Δt,0.0], unique_id, parent_id, status) # Why not use rates vector instead of hard coding 6.08e-8?
         elseif status=="mutant"
             new([6.08e-8*Δt,6.08e-8*Δt,0.0], unique_id, parent_id, status)
         end
     end
 end 
 
-@everywhere rates(mol::mtDNA) = mol.rates
+@everywhere rates(mol::mtDNA) = mol.rates # These haven't been defined yet?
 @everywhere unique_id(mol::mtDNA) = mol.unique_id
 @everywhere parent_id(mol::mtDNA) = mol.parent_id
 @everywhere status(mol::mtDNA) = mol.status 
@@ -48,16 +48,16 @@ end
     N = trunc(Int, Tmax/dt)
     Nout = trunc(Int, Tmax/out_dt)
     system_state = init
-    current_id = length(init) + 1.0
+    current_id = length(init) + 1.0 # Why is this a float and not an integer? +1?
     output = fill(-1.0, (2,Nout+1))
     C0 = length(init)
     target = 0.0
     tt = 0.0
     i = 1
     for k=1:N
-        if tt>=target
+        if tt>=target # I guess there's no guarantee that the simulation timesteps will line up with the output timesteps?
             output[:,i] = counter(system_state)
-            target += out_dt
+            target += out_dt # So could be out by a small amount every output timestep...
             i += 1
         end
         molecules_to_remove = Vector{Int}()
@@ -66,9 +66,9 @@ end
             molecule = system_state[mol_ind]
             roll = rand(Float64)
             cdf = cumsum( rates(molecule) ) 
-            if 0.0<roll && roll<cdf[1] # degredation
+            if 0.0<=roll && roll<cdf[1] # degradation
                 append!( molecules_to_remove, mol_ind)
-            elseif cdf[1]<roll && roll<cdf[2] # replication
+            elseif cdf[1]<=roll && roll<cdf[2] # replication
                 append!(molecules_to_remove, mol_ind)
                 for j=1:2
                     current_id += 1
@@ -85,7 +85,7 @@ end
                 end
             end
         end
-        system_state = [mol for (i,mol) in enumerate(system_state) if i ∉ molecules_to_remove ]
+        system_state = [mol for (i,mol) in enumerate(system_state) if !(i in molecules_to_remove) ]
         append!(system_state, new_molecules)
         tt += dt
         if sum(counter(system_state)) == 0

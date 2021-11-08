@@ -202,7 +202,8 @@ savefig("cheekypdf.pdf") # You should save this as a raster file (e.g. lossless 
 
 p3 = plot(ts, sims_qntl[:,:,1], title="Copy Number Qunatiles")
 p4 = plot(ts, sims_qntl[:,:,2], title="Mutation Load Quantiles")
-plot(p3, p4, layout=(1,2), legend=false)
+plot(p3, p4, layout=(1,2), legend=false,dpi=300)
+savefig("cheekypng.png")
 
 writedlm("Simulations/CN_qnt_abm_jl.txt", sims_qntl[:,:,1]) # Error message saying these files don't exist
 writedlm("Simulations/ML_qnt_abm_jl.txt", sims_qntl[:,:,2])

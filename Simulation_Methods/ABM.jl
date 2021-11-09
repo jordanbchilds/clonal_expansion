@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 import Pkg
 using Distributed, Plots, DelimitedFiles, Colors
 length(Sys.cpu_info())
@@ -18,14 +21,14 @@ addprocs(4) ;
     parent_id::Int
     status::String
     
-    function mtDNA(unique_id,parent_id,status)
+    function mtDNA(rates, unique_id, parent_id, status)
         if !(status in ["wild", "mutant"])
             error("Molecules must be of type 'wild' or 'mutant' ")
         end
         if status=="wild"
-            new([6.08e-8*Δt,6.08e-8*Δt,0.0], unique_id, parent_id, status) # Why not use rates vector instead of hard coding 6.08e-8?
+            new(rates, unique_id, parent_id, status) # Why not use rates vector instead of hard coding 6.08e-8?
         elseif status=="mutant"
-            new([6.08e-8*Δt,6.08e-8*Δt,0.0], unique_id, parent_id, status)
+            new(rates, unique_id, parent_id, status)
         end
     end
 end 

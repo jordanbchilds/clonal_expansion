@@ -1,7 +1,7 @@
 library("parallel")
 
-CN_gill = read.table("./Simulations/CN_qnt_gill_r.txt", header=FALSE)
-ML_gill = read.table("./Simulations/ML_qnt_gill_r.txt", header=FALSE)
+CN_gill = read.table("./CN_qnt_gill_r.txt", header=FALSE)
+ML_gill = read.table("./ML_qnt_gill_r.txt", header=FALSE)
 
 ##########
 ## POSSION LEAP PRCOESS
@@ -174,8 +174,8 @@ tauLeap_qntl = quantiles(tauLeap_sim, p=c(0.025,0.25,0.5,0.75,0.975))
 
 ###
 ### save output
-write.table(tauLeap_qntl[[1]], "./Simulations/CN_qnt_tau_r.txt",row.names=F, col.names=F)
-write.table(tauLeap_qntl[[2]], "./Simulations/ML_qnt_tau_r.txt",row.names=F, col.names=F)
+write.table(tauLeap_qntl[[1]], "./CN_qnt_tau_r.txt",row.names=F, col.names=F)
+write.table(tauLeap_qntl[[2]], "./ML_qnt_tau_r.txt",row.names=F, col.names=F)
 
 ###
 ### distribution at given times 
@@ -199,9 +199,9 @@ sims_dist = slice_dist(tauLeap_sim, 1:8*10*365*24*3600, Tmax, dt)
 
 ###
 ### save time slice distributions
-write.table(sims_dist[[1]], file="Simulations/CN_ts_tau_r.txt",
+write.table(sims_dist[[1]], file="CN_ts_tau_r.txt",
             row.names=F, col.names=F)
-write.table(sims_dist[[2]], file="Simulations/ML_ts_tau_r.txt",
+write.table(sims_dist[[2]], file="ML_ts_tau_r.txt",
             row.names=F, col.names=F)
 
 
@@ -257,7 +257,7 @@ tauLeap_sim_5dt = lapply(tauLeap_raw_5dt, raw_to_hC)
 tauLeap_qntl_5dt = quantiles(tauLeap_sim_5dt, p=c(0.025,0.25,0.5,0.75,0.975))
 sims_dist_5dt = slice_dist(tauLeap_sim_5dt, 1:8*10*365*24*3600, Tmax, dt*5)
 
-pdf("Simulations/PDF/TauLeap_dt_test.pdf", width=14, height=8.5)
+pdf("TauLeap_dt_test.pdf", width=14, height=8.5)
 par(mfrow=c(1,2))
   qntl_plotter(tauLeap_qntl[[1]], ylim=c(0,600), Tend=80, freq=52, title="Copy Number", main="dt = 1 day", comp_qntls=CN_gill, cols=c(myBlack, myBlue) )
   qntl_plotter(tauLeap_qntl[[2]], ylim=c(0,1), Tend=80, freq=52, title="Mutation Load", main="dt = 1 day", comp_qntls=ML_gill, cols=c(myBlack, myBlue)  )
@@ -271,7 +271,7 @@ par(mfrow=c(1,2))
   qntl_plotter(tauLeap_qntl_5dt[[2]], ylim=c(0,1), Tend=80, freq=52,title="Mutation Load", main="dt = 5 days",  comp_qntls=ML_gill, cols=c(myBlack, myBlue)  )
 dev.off()
 
-pdf("Simulations/PDF/CN_Tau_dt_test_ts.pdf", width=14, height=8.5)
+pdf("CN_Tau_dt_test_ts.pdf", width=14, height=8.5)
   par(mfrow=c(2,4))
   dist_comp(list(sims_dist[[1]], sims_dist_2dt[[1]], sims_dist_3dt[[1]], sims_dist_4dt[[1]], sims_dist_5dt[[1]]),
             titles=paste(1:8*10, "Years"), 
@@ -279,7 +279,7 @@ pdf("Simulations/PDF/CN_Tau_dt_test_ts.pdf", width=14, height=8.5)
   title(main="Copy Number", outer=T, line=-1)
 dev.off()
 
-pdf("Simulations/PDF/ML_Tau_dt_test_ts.pdf", width=14, height=8.5)
+pdf("ML_Tau_dt_test_ts.pdf", width=14, height=8.5)
   par(mfrow=c(2,4))
   dist_comp(list(sims_dist[[2]], sims_dist_2dt[[2]], sims_dist_3dt[[2]], sims_dist_4dt[[2]], sims_dist_5dt[[2]]),
           titles=paste(1:8*10, "Years"), 

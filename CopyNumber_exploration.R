@@ -1,0 +1,86 @@
+library("dplyr")
+
+myBlack = rgb(0,0,0, alpha=0.05)
+myBlue = rgb(0,0,1, alpha=0.1)
+myRed = rgb(1,0,0, alpha=0.1)
+
+# 23 patients in the Rocha dataset, 6 given here
+rocha = read.csv("rocha_deletions.csv", sep=",", header=T, stringsAsFactors=F)
+moraes = read.csv("moraes.csv")
+
+# density of copy number across the dataset
+copy_num = rocha$TCN.Fibre
+CN_dens = density(copy_num)
+mode = CN_dens$x[which.max(CN_dens$y)]
+
+plot(density(copy_num), main="Rocha et al.", xlab="Copy Number", ylab="" , lwd=2)
+abline(v=mode, col="blue", lwd=2)
+legend("topright", legend=c("median"), col="blue", lwd=2)
+
+# patient numbers
+pts = unique(rocha$Case.No.)
+# manually write in patient ages, given in Rocha et al.
+age = c(21,53.5,48,40,32.5,28)
+rocha$age = rep(NA, nrow(rocha))
+# map each patient to their age
+for(i in seq_along(pts)){
+  rocha$age[rocha$Case.No. == pts[i]] = age[i]
+}
+# fibre type 
+fib_types = unique(rocha$Fibre.Type)
+rocha$Fibre.Type = tolower(rocha$Fibre.Type)
+rocha$Fibre.Type[rocha$Fibre.Type=="type iia/type iix" | rocha$Fibre.Type=="type iia/ iix"] = "type iia/iix"
+Fib.type_index = rocha$Fibre.Type == "type i"
+
+## add a wee bit o jitter, to be able to see fibres better
+jitter = runif(length(rocha$age), -1,1)*1.5
+
+# Jitter comparison plots
+par(mfrow=c(1,2))
+plot(rocha$age, rocha$TCN.Fibre, pch=16, col=myBlack, 
+     ylab="Copy Number", xlab="Time (years)", main="Rocha et al.")
+plot(rocha$age+jitter, rocha$TCN.Fibre, pch=16, col=myBlack, 
+     ylab="Copy Number", xlab="~Time (years)", main="Rocha et al.")
+
+plot(rocha$age, rocha$TCN.Fibre, pch=16, col=myBlack, log="y",
+     ylab="log Copy Number", xlab="Time (years)", main="Rocha et al.")
+plot(rocha$age+jitter, rocha$TCN.Fibre, pch=16, col=myBlack, log="y",
+     ylab="log Copy Number", xlab="~Time (years) ", main="Rocha et al.")
+par(mfrow=c(1,1))
+
+# copy number plots
+plot(rocha$age[Fib.type_index]+jitter[Fib.type_index], rocha$TCN.Fibre[Fib.type_index],
+     pch=16, col=myRed, ylab="Copy Number", xlab="~Time (years)", main="Rocha et al.")
+points(rocha$age[!Fib.type_index]+jitter[!Fib.type_index], rocha$TCN.Fibre[!Fib.type_index],
+       pch=16, col=myBlue)
+legend("topright", legend=c("Type I", "Type IIa/Type IIx"), pch=16, col=c(myRed, myBlue))
+text(age, rep(min(rocha$TCN.Fibre),length(pts)), pts, pos=3)
+
+plot(rocha$age[Fib.type_index]+jitter[Fib.type_index], rocha$TCN.Fibre[Fib.type_index], log="y",
+     pch=16, col=myRed, ylab="log Copy Number", xlab="~Time (years)", main="Rocha et al.")
+points(rocha$age[!Fib.type_index]+jitter[!Fib.type_index], rocha$TCN.Fibre[!Fib.type_index],
+       pch=16, col=myBlue)
+legend("topright", legend=c("Type I", "Type IIa/Type IIx"), pch=16, col=c(myRed, myBlue))
+text(age, rep(min(rocha$TCN.Fibre),length(pts)), pts, pos=3)
+
+
+## copy number distribution 
+par(mfrow=c(1,2))
+plot(density(rocha$TCN.Fibre), main="Copy Number Density", ylab="", 
+     xlab="Copy Number")
+plot(density(log(rocha$TCN.Fibre)), main="log Copy Number Density", ylab="", 
+     xlab="log Copy Number")
+
+mean_logCN =  mean(log(rocha$TCN.Fibre))
+sd_logCN = sqrt(var(log(rocha$TCN.Fibre)))
+
+plot(density(log(rocha$TCN.Fibre)), main="Density log Copy Number", ylab="", 
+     xlab="log Copy Number", lwd=2)
+lines(seq(0,20,0.01), dnorm(seq(0,20,0.01), mean_logCN, sd_logSD), col="blue", lwd=2 )
+legend("topright", legend=c(""))
+
+
+
+
+
+

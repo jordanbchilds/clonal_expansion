@@ -22,8 +22,13 @@ ML_ts_tau_r = read.table("./Simulations/ML_ts_tau_r.txt")
 CN_ts_tau_jl = read.table("./Simulations/CN_ts_tau_jl.txt")
 ML_ts_tau_jl = read.table("./Simulations/ML_ts_tau_jl.txt")
 
-CN_qnt_abm_jl = read.table("./Simulations/CN_qnt_abm_jl.txt")
-ML_qnt_abm_jl = read.table("./Simulations/ML_qnt_abm_jl.txt")
+CN_qnt_abm_onehour = read.table("./Simulations/CN_qnt_abm_jl_onehour.txt")
+ML_qnt_abm_onehour = read.table("./Simulations/ML_qnt_abm_jl_onehour.txt")
+
+CN_qnt_abm_oneday = read.table("./Simulations/CN_qnt_abm_jl_oneday.txt")
+ML_qnt_abm_oneday = read.table("./Simulations/ML_qnt_abm_jl_oneday.txt")
+
+
 
 Tmax = 80*365*24*3600
 dt = 24*3600

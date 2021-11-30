@@ -1,4 +1,4 @@
-#!/usr/bin/julia
+#/usr/local/bin/julia
 
 import Pkg
 using Plots, DelimitedFiles, Colors, Random, Statistics
@@ -9,10 +9,15 @@ addprocs(24) ;
 
 @everywhere using Random, Distributed
 
-Tmax = 80*365
-Δtout = 7 # time step to save output
-Δt = 1 # time step for the simulation
-Nsim = 500 ; # number of simulations
+hour = 3600
+day = 24*hour
+year = 365*day
+
+step = day # time step for the simulation
+step_out = 7*day # time step to save output
+Tmax = 80*year
+
+Nsim = 1000 ; # number of simulations
 
 @everywhere struct mtDNA 
     rates::Vector{Real}
@@ -37,7 +42,7 @@ end
 @everywhere parent_id(mol::mtDNA) = mol.parent_id
 @everywhere status(mol::mtDNA) = mol.status 
 
-@everywhere function counter(system_state)::Vector{Int64}
+@everywhere function counter(system_state)::Vector{Float64}
     """
     Calculates the population size for wild and mutant type
     """
@@ -46,15 +51,15 @@ end
     return [W, copy_num-W]
 end
 
-@everywhere function transform_summ(pop_dynamics)::Array{Any}
+@everywhere function transform_summ(pop_dynamics)::Array{Union{Float64, Missing}}
     copy_num = pop_dynamics[:,1] .+ pop_dynamics[:,2]
     mut_load = pop_dynamics[:,2]./copy_num
     return hcat(copy_num, mut_load)
 end
 
-@everywhere function agented(init, Tmax::Real, dt::Real, out_dt::Real)
+@everywhere function agented(init, Tmax::Real, dt::Real, dtout::Real)::Array{Union{Float64, Missing}}
     N = trunc(Int, Tmax/dt)
-    Nout = trunc(Int, Tmax/out_dt)
+    Nout = trunc(Int, Tmax/dtout)
     system_state = init
     current_id = length(init) + 1
     popdym = Array{Union{Float64, Missing}}(undef, (2,Nout+1))
@@ -65,7 +70,7 @@ end
     for k=1:N
         if tt>=target
             popdym[:,i] = counter(system_state)
-            target += out_dt
+            target += dtout
             i += 1
         end
         molecules_to_remove = Vector{Int}()
@@ -80,7 +85,7 @@ end
                 append!(molecules_to_remove, mol_ind)
                 for j=1:2
                     current_id += 1
-                    daughter = mtDNA([3.06e-8,3.06e-8,0]*3600*24, current_id, unique_id(molecule), status(molecule) )
+                    daughter = mtDNA([3.06e-8,3.06e-8,0]*dt, current_id, unique_id(molecule), status(molecule) )
                     push!(new_molecules, daughter)
                 end
             elseif cdf[2]<roll && roll<=cdf[3] # mutation
@@ -88,7 +93,7 @@ end
                append!(molecules_to_remove, mol_ind)
                 for j=1:2
                     current_id += 1
-                    daughter = mtDNA([3.06e-8,3.06e-8,0]*3600*24, current_id, unique_id(molecule), ["wild","mutant"][j])
+                    daughter = mtDNA([3.06e-8,3.06e-8,0]*dt, current_id, unique_id(molecule), ["wild","mutant"][j])
                     push!(new_molecules, daughter)
                 end
             end
@@ -114,10 +119,10 @@ C0 = 200
 h = 0.5
 W0 = round.( C0.*(1 .-h), digits=0)
 M0 = round.( C0.*h, digits=0)
-inits = [mtDNA([3.06e-8, 3.06e-8, 0]*3600*24, x,-1,"wild") for x=1:W0 ]# initial state of system
-append!(inits, [mtDNA([3.06e-8, 3.06e-8, 0]*3600*24, x,-1,"mutant") for x=W0+1:W0+M0] ) ;
+inits = [mtDNA([3.06e-8, 3.06e-8, 0]*step, x,-1,"wild") for x=1:W0 ]# initial state of system
+append!(inits, [mtDNA([3.06e-8, 3.06e-8, 0]*step, x,-1,"mutant") for x=W0+1:W0+M0] ) ;
 
-@time abm_sim = agented(inits, Tmax, Δt, Δtout)
+@time abm_sim = agented(inits, Tmax, step, step_out)
 
 """
 one simple simulation takes 0 - 3 seconds
@@ -130,9 +135,9 @@ abm_sim ;
 500 simple simulations: 950 seconds 
 """
 
-function par_map(Nsim, f, init, Tmax, Δt, Δtout)
+function par_map(Nsim, f, init, Tmax, dt, dtout)
     np = nprocs()  # determine the number of processes available
-    results = Vector{Any}(undef, Nsim)
+    results = Vector{Array{Union{Float64, Missing}}}(undef, Nsim)
     i = 1
     # function to produce the next work item from the queue.
     # in this case it's just an index.
@@ -146,7 +151,7 @@ function par_map(Nsim, f, init, Tmax, Δt, Δtout)
                         if idx > Nsim
                             break
                         end
-                        results[idx] = remotecall_fetch(f, p, inits, Tmax, Δt, Δtout)
+                        results[idx] = remotecall_fetch(f, p, inits, Tmax, dt, dtout)
                     end
                 end
             end
@@ -155,13 +160,13 @@ function par_map(Nsim, f, init, Tmax, Δt, Δtout)
     results
 end
 
-@time simulations = par_map(Nsim, agented, inits, Tmax, Δt, Δtout) ; 
+@time simulations = par_map(Nsim, agented, inits, Tmax, step, step_out) ; 
 """
 simple simulution : 280 seconds
 4 workers
 time step = 1 day
 
-simple simulation : [a long fucking time] 6700 seconds
+simple simulation : [a long f***ing time] 6700 seconds
 (legit just 24 times longer than the day)
 4 workers
 time step = 1 hour
@@ -184,18 +189,17 @@ end
 sims_qntl = quantiles(simulations, [0.025,0.25,0.5,0.75,0.975]) ;
 
 myBlack = colorant"rgb(0,0,0,0.1)"
-ts = [0:Δtout:Tmax;]./(365);
+ts = [0:step_out:Tmax;]./year;
 
-typeof(simulations)
-n = trunc(Int, Tmax/Δtout)
+n = trunc(Int, Tmax/step_out)
 sim_mat = Array{Union{Float64, Missing}}(undef, (n+1,2,Nsim))
 
 for i=1:Nsim
     sim_mat[:,:,i] = simulations[i]
 end
 
-p1 = plot(ts, tt[:,1,:], color=myBlack, legend=false, title="Copy Number")
-p2 = plot(ts, tt[:,2,:], color=myBlack, legend=false, title="Mutation Load")
+p1 = plot(ts, sim_mat[:,1,:], color=myBlack, legend=false, title="Copy Number")
+p2 = plot(ts, sim_mat[:,2,:], color=myBlack, legend=false, title="Mutation Load")
 plot(p1, p2, layout=(1,2), legend=false)
 savefig("Simulations/PDF/abm_simulations_oneday.pdf")
 
@@ -204,7 +208,7 @@ p4 = plot(ts, sims_qntl[:,:,2], title="Mutation Load Quantiles")
 plot(p3, p4, layout=(1,2), legend=false)
 savefig("Simulations/PDF/abm_qntls_oneday.pdf")
 
-writedlm("Simulations/CN_qnt_abm_jl_oneday.txt", sims_qntl[:,:,1])
-writedlm("Simulations/ML_qnt_abm_jl_oneday.txt", sims_qntl[:,:,2])
+writedlm("Simulations/CN_qnt_abm_oneday.txt", sims_qntl[:,:,1])
+writedlm("Simulations/ML_qnt_abm_oneday.txt", sims_qntl[:,:,2])
 
 

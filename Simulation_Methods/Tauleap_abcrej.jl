@@ -1,18 +1,11 @@
 #/usr/local/bin/julia
 
 using Pkg
-Pkg.add("Distributed")
-Pkg.add("Plots")
-Pkg.add("DelimitedFiles")
-Pkg.add("CSV")
-Pkg.add("DataFrames")
-Pkg.add("Random")
-Pkg.add("Distributions")
 
 using Distributed, Plots, DelimitedFiles, CSV, DataFrames, Random, Distributions
 
 length(Sys.cpu_info())
-addprocs(4) ;
+addprocs(24) ;
 
 @everywhere using Random, Distributions
 

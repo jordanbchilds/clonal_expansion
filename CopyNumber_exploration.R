@@ -5,14 +5,15 @@ myBlue = rgb(0,0,1, alpha=0.1)
 myRed = rgb(1,0,0, alpha=0.1)
 
 # 23 patients in the Rocha dataset, 6 given here
-rocha = read.csv("rocha_deletions.csv", sep=",", header=T, stringsAsFactors=F)
-moraes = read.csv("moraes.csv")
+rocha = read.csv("../rocha_deletions.csv", sep=",", header=T, stringsAsFactors=F)
+moraes = read.csv("../Moraes_data.csv")
 
 # density of copy number across the dataset
 copy_num = rocha$TCN.Fibre
 CN_dens = density(copy_num)
 mode = CN_dens$x[which.max(CN_dens$y)]
 
+par(mfrow=c(1,1))
 plot(density(copy_num), main="Rocha et al.", xlab="Copy Number", ylab="" , lwd=2)
 abline(v=mode, col="blue", lwd=2)
 legend("topright", legend=c("median"), col="blue", lwd=2)
@@ -80,6 +81,16 @@ lines(seq(0,20,0.01), dnorm(seq(0,20,0.01), mean_logCN, sd_logSD), col="blue", l
 legend("topright", legend=c(""))
 
 
+## distribution per patient 
+par(mfrow=c(1,1))
+xmax = max(rocha$TCN.Fibre)
+plot(1, type='n', xlim=c(0,4e5), ylim=c(0,0.00005), xlab="Copy Number", ylab="Density", 
+     main="Copy Number Distribution")
+for(i in seq_along(pts)){
+  pat_data = rocha[rocha$Case.No. == pts[i], ]
+  lines(density(pat_data$TCN.Fibre), col=i, lwd=2)
+}
+legend("topright", lty=1, lwd=2, legend=pts, col=1:length(pts))
 
 
 

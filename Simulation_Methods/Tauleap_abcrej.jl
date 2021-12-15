@@ -1,4 +1,4 @@
-#/usr/local/bin/julia
+#!/usr/local/bin/julia
 
 using Pkg
 Pkg.add("Distributed")

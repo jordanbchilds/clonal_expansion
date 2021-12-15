@@ -1,6 +1,13 @@
 #/usr/bin/julia
 
 using Pkg
+Pkg.add("Distributed")
+Pkg.add("Plots")
+Pkg.add("DelimitedFiles")
+Pkg.add("CSV")
+Pkg.add("DataFrames")
+Pkg.add("Random")
+Pkg.add("Distributions")
 
 using Distributed, Plots, DelimitedFiles, CSV, DataFrames, Random, Distributions
 

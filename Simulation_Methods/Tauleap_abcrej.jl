@@ -140,15 +140,6 @@ end
     output
 end
 
-n = trunc(Int, Tmax/step_out)
-sim_mat = Array{Float64}(undef, Nsim,length(timed))
-
-for i=1:Nsim
-    sim_mat[i,:] = simulations[i]'
-end
-
-sim_mat ;
-
 @everywhere function quantiles(sims, p)::Array{Float64, 2}
     """
     returns quantile summaries from simulations

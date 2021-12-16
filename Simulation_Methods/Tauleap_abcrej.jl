@@ -16,7 +16,7 @@ addprocs(24) ;
 
 @everywhere using Random, Distributions
 
-moraes = DataFrame(CSV.File("../Moraes_data.csv"))
+moraes = DataFrame(CSV.File("../moraes_data.csv"))
 moraes_df = filter(r->r.time>=15, moraes)
 
 wild_df = filter(row->row.type=="wild", moraes_df)  ; 

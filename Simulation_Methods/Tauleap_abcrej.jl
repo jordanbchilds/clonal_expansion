@@ -182,7 +182,7 @@ function easy_abc(Nabc, topn, data, inits, Tmax, dt, dtout, target,  Nsim)
     
     while i<=Nabc
         # init_pop, pops, rate_vec, Stoichiometry_matrix
-        theta_star = prior_draws()
+        theta_star = prior_draw()
         spn_star = SPN(inits[1], inits[2], theta_star, inits[3])
         sims = par_sim(Nsim, tauleap, spn_star, Tmax, dt, dtout, target)
         qnts = quantiles(sims, [0.025,0.5,0.975])
@@ -204,9 +204,6 @@ Nout = 1000
 inits = (200.0, 20.0, S)
 
 @time abc_output = easy_abc(Nabc, Nout, wild_mat, inits, Tmax, step, step_out, timed.-15*day, Nsim) 
-"""
-100 runs: ~ 220 seconds
-""" ;
 
 mkpath("Inference")
 writedlm("Inference/tauleap_abcrej.txt", abc_output)

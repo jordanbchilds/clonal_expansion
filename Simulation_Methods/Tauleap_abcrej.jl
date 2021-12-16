@@ -203,7 +203,7 @@ Nabc = 10000
 Nout = 1000
 inits = (200.0, 20.0, S)
 
-@time abc_output = easy_abc(Nabc, Nout, inits, Tmax, step, step_out, timed.-15*day, Nsim) 
+@time abc_output = easy_abc(Nabc, Nout, wild_mat, inits, Tmax, step, step_out, timed.-15*day, Nsim) 
 """
 100 runs: ~ 220 seconds
 """ ;

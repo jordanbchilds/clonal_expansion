@@ -1,13 +1,13 @@
 #!/usr/local/bin/julia
 
 using Pkg
-Pkg.add("Distributed")
-Pkg.add("Plots")
-Pkg.add("DelimitedFiles")
-Pkg.add("CSV")
-Pkg.add("DataFrames")
-Pkg.add("Random")
-Pkg.add("Distributions")
+# Pkg.add("Distributed")
+# Pkg.add("Plots")
+# Pkg.add("DelimitedFiles")
+# Pkg.add("CSV")
+# Pkg.add("DataFrames")
+# Pkg.add("Random")
+# Pkg.add("Distributions")
 
 using Distributed, Plots, DelimitedFiles, CSV, DataFrames, Random, Distributions
 
@@ -117,7 +117,6 @@ end
 end
 
 
-# The arguments are: 1) a function 'f' and 2) a list with the input.
 @everywhere function par_sim(Nsim::Int64, f, spn::SPN, Tmax::Real, dt::Real, dtout::Real, target)
     np = nworkers()            # Number of processes available.
     output = Vector{Array{Float64}}(undef, Nsim) 

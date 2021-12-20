@@ -1,3 +1,5 @@
+#!/usr/local/bin/julia
+
 import Pkg
 using Plots, DelimitedFiles, Colors, Random, Statistics
 using Distributed

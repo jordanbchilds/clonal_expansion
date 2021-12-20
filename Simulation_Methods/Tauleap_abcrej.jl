@@ -1,4 +1,5 @@
 #!/usr/local/bin/julia
+# -*- coding: utf-8 -*-
 
 using Pkg
 # Pkg.add("Distributed")
